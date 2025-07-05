@@ -27,6 +27,11 @@ const Index = () => {
     localStorage.setItem("fitnessAppUserData", JSON.stringify(data));
   };
 
+  const handleUserDataUpdate = (data: UserData) => {
+    setUserData(data);
+    localStorage.setItem("fitnessAppUserData", JSON.stringify(data));
+  };
+
   const handleLogout = () => {
     setUserData(null);
     localStorage.removeItem("fitnessAppUserData");
@@ -38,7 +43,7 @@ const Index = () => {
   }
 
   // Show main workout dashboard
-  return <WorkoutDashboard userData={userData} onLogout={handleLogout} />;
+  return <WorkoutDashboard userData={userData} onLogout={handleLogout} onUserDataUpdate={handleUserDataUpdate} />;
 };
 
 export default Index;

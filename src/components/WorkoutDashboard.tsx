@@ -5,6 +5,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ExerciseCard } from "./ExerciseCard";
 import { RestTimer } from "./RestTimer";
+import { Certificate } from "./Certificate";
+import { useWorkoutTracking } from "@/hooks/useWorkoutTracking";
+import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/fitness-hero.jpg";
 
 interface UserData {
@@ -29,13 +32,24 @@ interface Exercise {
 interface WorkoutDashboardProps {
   userData: UserData;
   onLogout: () => void;
+  onUserDataUpdate: (userData: UserData) => void;
 }
 
-export function WorkoutDashboard({ userData, onLogout }: WorkoutDashboardProps) {
+export function WorkoutDashboard({ userData, onLogout, onUserDataUpdate }: WorkoutDashboardProps) {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
   const [currentSet, setCurrentSet] = useState(1);
   const [isResting, setIsResting] = useState(false);
   const [workoutProgress, setWorkoutProgress] = useState(0);
+  
+  const { toast } = useToast();
+  const {
+    workoutData,
+    recordWorkout,
+    shouldShowCertificate,
+    resetCertificate,
+    levelUpgraded,
+    resetLevelUpgrade
+  } = useWorkoutTracking(userData);
 
   const workouts = {
     basic: [
@@ -154,6 +168,17 @@ export function WorkoutDashboard({ userData, onLogout }: WorkoutDashboardProps) 
     setWorkoutProgress((completedSets / totalSets) * 100);
   }, [currentExerciseIndex, currentSet, todaysWorkout]);
 
+  // Handle level upgrade notifications
+  useEffect(() => {
+    if (levelUpgraded) {
+      toast({
+        title: "Level Up! 🎉",
+        description: `Congratulations! You've been upgraded to ${userData.fitnessLevel} level after 30 days of consistency!`,
+      });
+      resetLevelUpgrade();
+    }
+  }, [levelUpgraded, userData.fitnessLevel, toast, resetLevelUpgrade]);
+
   const handleSetComplete = () => {
     if (currentSet < currentExercise.sets) {
       setIsResting(true);
@@ -166,6 +191,10 @@ export function WorkoutDashboard({ userData, onLogout }: WorkoutDashboardProps) 
       } else {
         // Workout complete
         setWorkoutProgress(100);
+        const updatedUserData = recordWorkout();
+        if (updatedUserData && updatedUserData !== userData) {
+          onUserDataUpdate(updatedUserData);
+        }
       }
     }
   };
@@ -176,6 +205,16 @@ export function WorkoutDashboard({ userData, onLogout }: WorkoutDashboardProps) 
       setCurrentSet(currentSet + 1);
     }
   };
+
+  if (shouldShowCertificate) {
+    return (
+      <Certificate
+        userData={userData}
+        workoutData={workoutData}
+        onClose={resetCertificate}
+      />
+    );
+  }
 
   if (isResting) {
     return (
@@ -224,6 +263,10 @@ export function WorkoutDashboard({ userData, onLogout }: WorkoutDashboardProps) 
             </CardTitle>
             <CardDescription>
               Exercise {currentExerciseIndex + 1} of {todaysWorkout.length} • Set {currentSet} of {currentExercise.sets}
+              <br />
+              <span className="text-xs">
+                🏆 {workoutData.totalWorkouts} workouts • 🔥 {workoutData.currentStreak} day streak • 📅 {workoutData.daysActive} active days
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent>
