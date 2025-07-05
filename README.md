@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/d0fbd486-658f-40f8-a808-8b1da21badeb
+**URL**: https://fit-track-roni.lovable.app
 
 ## How can I edit this code?
 
